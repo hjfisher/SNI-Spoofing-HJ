@@ -1,7 +1,1069 @@
 {
   "LISTEN_HOST": "0.0.0.0",
   "LISTEN_PORT": 40443,
-  "CONNECT_IP": "188.114.98.0",
   "CONNECT_PORT": 443,
-  "FAKE_SNI": "auth.vercel.com"
+  "HEALTH_CHECK_INTERVAL": 30,
+  "HEALTH_CHECK_TIMEOUT": 3,
+  "CONNECT_PAIRS":[
+  {
+    "ip": "104.19.229.21",
+    "sni": "www.hcaptcha.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "hcaptcha.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "newassets.hcaptcha.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "js.hcaptcha.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "cdnjs.cloudflare.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "workers.cloudflare.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "pages.cloudflare.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "dash.cloudflare.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "www.cloudflare.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "blog.cloudflare.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "developers.cloudflare.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "api.cloudflare.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "1dot1dot1dot1.cloudflare.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "www.speedtest.net"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "speed.cloudflare.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "assets.github.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "raw.githubusercontent.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "www.npmjs.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "registry.npmjs.org"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "www.coursera.org"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "www.udemy.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "www.khan-academy.org"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "www.codecademy.com"
+  },
+  {
+    "ip": "104.19.229.21",
+    "sni": "replit.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "www.hcaptcha.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "hcaptcha.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "newassets.hcaptcha.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "js.hcaptcha.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "cdnjs.cloudflare.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "workers.cloudflare.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "pages.cloudflare.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "dash.cloudflare.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "www.cloudflare.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "blog.cloudflare.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "developers.cloudflare.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "api.cloudflare.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "1dot1dot1dot1.cloudflare.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "www.speedtest.net"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "speed.cloudflare.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "assets.github.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "raw.githubusercontent.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "www.npmjs.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "registry.npmjs.org"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "www.coursera.org"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "www.udemy.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "www.khan-academy.org"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "www.codecademy.com"
+  },
+  {
+    "ip": "172.66.41.252",
+    "sni": "replit.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "www.hcaptcha.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "hcaptcha.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "newassets.hcaptcha.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "js.hcaptcha.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "cdnjs.cloudflare.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "workers.cloudflare.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "pages.cloudflare.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "dash.cloudflare.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "www.cloudflare.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "blog.cloudflare.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "developers.cloudflare.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "api.cloudflare.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "1dot1dot1dot1.cloudflare.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "www.speedtest.net"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "speed.cloudflare.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "assets.github.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "raw.githubusercontent.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "www.npmjs.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "registry.npmjs.org"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "www.coursera.org"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "www.udemy.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "www.khan-academy.org"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "www.codecademy.com"
+  },
+  {
+    "ip": "108.162.196.145",
+    "sni": "replit.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "www.hcaptcha.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "hcaptcha.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "newassets.hcaptcha.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "js.hcaptcha.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "cdnjs.cloudflare.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "workers.cloudflare.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "pages.cloudflare.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "dash.cloudflare.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "www.cloudflare.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "blog.cloudflare.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "developers.cloudflare.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "api.cloudflare.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "1dot1dot1dot1.cloudflare.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "www.speedtest.net"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "speed.cloudflare.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "assets.github.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "raw.githubusercontent.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "www.npmjs.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "registry.npmjs.org"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "www.coursera.org"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "www.udemy.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "www.khan-academy.org"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "www.codecademy.com"
+  },
+  {
+    "ip": "172.65.13.230",
+    "sni": "replit.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "www.hcaptcha.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "hcaptcha.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "newassets.hcaptcha.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "js.hcaptcha.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "cdnjs.cloudflare.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "workers.cloudflare.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "pages.cloudflare.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "dash.cloudflare.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "www.cloudflare.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "blog.cloudflare.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "developers.cloudflare.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "api.cloudflare.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "1dot1dot1dot1.cloudflare.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "www.speedtest.net"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "speed.cloudflare.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "assets.github.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "raw.githubusercontent.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "www.npmjs.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "registry.npmjs.org"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "www.coursera.org"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "www.udemy.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "www.khan-academy.org"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "www.codecademy.com"
+  },
+  {
+    "ip": "104.24.92.151",
+    "sni": "replit.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "www.hcaptcha.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "hcaptcha.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "newassets.hcaptcha.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "js.hcaptcha.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "cdnjs.cloudflare.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "workers.cloudflare.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "pages.cloudflare.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "dash.cloudflare.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "www.cloudflare.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "blog.cloudflare.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "developers.cloudflare.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "api.cloudflare.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "1dot1dot1dot1.cloudflare.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "www.speedtest.net"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "speed.cloudflare.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "assets.github.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "raw.githubusercontent.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "www.npmjs.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "registry.npmjs.org"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "www.coursera.org"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "www.udemy.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "www.khan-academy.org"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "www.codecademy.com"
+  },
+  {
+    "ip": "104.24.130.92",
+    "sni": "replit.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "www.hcaptcha.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "hcaptcha.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "newassets.hcaptcha.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "js.hcaptcha.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "cdnjs.cloudflare.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "workers.cloudflare.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "pages.cloudflare.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "dash.cloudflare.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "www.cloudflare.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "blog.cloudflare.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "developers.cloudflare.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "api.cloudflare.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "1dot1dot1dot1.cloudflare.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "www.speedtest.net"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "speed.cloudflare.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "assets.github.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "raw.githubusercontent.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "www.npmjs.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "registry.npmjs.org"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "www.coursera.org"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "www.udemy.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "www.khan-academy.org"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "www.codecademy.com"
+  },
+  {
+    "ip": "104.24.204.131",
+    "sni": "replit.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "www.hcaptcha.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "hcaptcha.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "newassets.hcaptcha.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "js.hcaptcha.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "cdnjs.cloudflare.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "workers.cloudflare.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "pages.cloudflare.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "dash.cloudflare.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "www.cloudflare.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "blog.cloudflare.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "developers.cloudflare.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "api.cloudflare.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "1dot1dot1dot1.cloudflare.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "www.speedtest.net"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "speed.cloudflare.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "assets.github.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "raw.githubusercontent.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "www.npmjs.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "registry.npmjs.org"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "www.coursera.org"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "www.udemy.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "www.khan-academy.org"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "www.codecademy.com"
+  },
+  {
+    "ip": "172.65.140.10",
+    "sni": "replit.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "www.hcaptcha.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "hcaptcha.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "newassets.hcaptcha.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "js.hcaptcha.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "cdnjs.cloudflare.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "workers.cloudflare.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "pages.cloudflare.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "dash.cloudflare.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "www.cloudflare.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "blog.cloudflare.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "developers.cloudflare.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "api.cloudflare.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "1dot1dot1dot1.cloudflare.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "www.speedtest.net"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "speed.cloudflare.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "assets.github.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "raw.githubusercontent.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "www.npmjs.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "registry.npmjs.org"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "www.coursera.org"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "www.udemy.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "www.khan-academy.org"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "www.codecademy.com"
+  },
+  {
+    "ip": "172.65.135.116",
+    "sni": "replit.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "www.hcaptcha.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "hcaptcha.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "newassets.hcaptcha.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "js.hcaptcha.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "cdnjs.cloudflare.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "workers.cloudflare.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "pages.cloudflare.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "dash.cloudflare.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "www.cloudflare.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "blog.cloudflare.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "developers.cloudflare.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "api.cloudflare.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "1dot1dot1dot1.cloudflare.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "www.speedtest.net"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "speed.cloudflare.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "assets.github.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "raw.githubusercontent.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "www.npmjs.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "registry.npmjs.org"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "www.coursera.org"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "www.udemy.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "www.khan-academy.org"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "www.codecademy.com"
+  },
+  {
+    "ip": "162.159.192.102",
+    "sni": "replit.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "www.hcaptcha.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "hcaptcha.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "newassets.hcaptcha.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "js.hcaptcha.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "cdnjs.cloudflare.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "workers.cloudflare.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "pages.cloudflare.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "dash.cloudflare.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "www.cloudflare.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "blog.cloudflare.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "developers.cloudflare.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "api.cloudflare.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "1dot1dot1dot1.cloudflare.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "www.speedtest.net"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "speed.cloudflare.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "assets.github.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "raw.githubusercontent.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "www.npmjs.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "registry.npmjs.org"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "www.coursera.org"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "www.udemy.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "www.khan-academy.org"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "www.codecademy.com"
+  },
+  {
+    "ip": "172.67.253.234",
+    "sni": "replit.com"
+  }
+],
+  "PROBE_COUNT": 5,
+  "LOSS_THRESHOLD": 0.2,
+  "DEAD_THRESHOLD": 0.8,
+  "ACTIVE_SLOTS": 3
 }
