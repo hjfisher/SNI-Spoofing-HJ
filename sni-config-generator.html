@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNI Config Generator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f14;
+    --bg2: #13161d;
+    --bg3: #1a1e28;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --accent: #3b82f6;
+    --accent2: #60a5fa;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #475569;
+    --mono: 'Courier New', monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+
+  .header h1 { font-size: 17px; font-weight: 600; letter-spacing: 0.3px; }
+  .header p  { font-size: 12px; color: var(--text2); margin-top: 1px; }
+
+  .badge {
+    margin-right: auto;
+    background: rgba(59,130,246,0.15);
+    border: 1px solid rgba(59,130,246,0.3);
+    color: var(--accent2);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    height: calc(100vh - 73px);
+  }
+
+  .panel {
+    padding: 24px;
+    overflow-y: auto;
+    border-left: 1px solid var(--border);
+  }
+
+  .panel:first-child { border-left: none; }
+
+  .section { margin-bottom: 24px; }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 5px;
+    margin-top: 12px;
+  }
+
+  label:first-of-type { margin-top: 0; }
+
+  input[type=text], input[type=number], textarea, select {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 8px 11px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+    direction: ltr;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 110px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .slider-row input[type=range] {
+    flex: 1;
+    height: 4px;
+    accent-color: var(--accent);
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+
+  .slider-val {
+    min-width: 38px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent2);
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    padding: 3px 6px;
+    font-family: var(--mono);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    width: 100%;
+    justify-content: center;
+    font-size: 14px;
+    padding: 11px;
+    margin-top: 8px;
+  }
+
+  .btn-primary:hover { background: #2563eb; }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .btn-sm {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    padding: 5px 12px;
+    font-size: 12px;
+  }
+
+  .btn-sm:hover { border-color: var(--accent); color: var(--accent2); }
+
+  .btn-green {
+    background: rgba(34,197,94,0.15);
+    border: 1px solid rgba(34,197,94,0.3);
+    color: var(--green);
+  }
+
+  .btn-green:hover { background: rgba(34,197,94,0.25); }
+
+  /* output panel */
+  .output-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .output-header h2 { font-size: 13px; font-weight: 600; }
+
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .stat {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+
+  .stat-val { font-size: 22px; font-weight: 700; color: var(--accent2); font-family: var(--mono); }
+  .stat-lbl { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  .code-box {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .code-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ef4444; }
+  .dot-y { background: #f59e0b; }
+  .dot-g { background: #22c55e; }
+
+  .code-filename { font-size: 12px; color: var(--text3); font-family: var(--mono); margin-right: auto; }
+
+  pre {
+    padding: 16px;
+    overflow: auto;
+    max-height: 420px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    color: #e2e8f0;
+    white-space: pre;
+  }
+
+  .json-key    { color: #93c5fd; }
+  .json-str    { color: #86efac; }
+  .json-num    { color: #fde68a; }
+  .json-bool   { color: #f9a8d4; }
+  .json-punc   { color: #94a3b8; }
+
+  .copy-toast {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--green);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .copy-toast.show { opacity: 1; }
+
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    padding: 3px 8px;
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text2);
+    direction: ltr;
+  }
+
+  .tag-x {
+    cursor: pointer;
+    color: var(--text3);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 1px;
+  }
+
+  .tag-x:hover { color: var(--red); }
+
+  .counter {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 5px;
+    font-family: var(--mono);
+  }
+
+  .counter span { color: var(--accent2); font-weight: 600; }
+
+  .hint {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text3);
+  }
+
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 13px; }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; height: auto; }
+    .panel { border-left: none; border-top: 1px solid var(--border); }
+    .row2, .row3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">⚡</div>
+  <div>
+    <h1>SNI Config Generator</h1>
+    <p>ساخت config برای SNI-Spoofing</p>
+  </div>
+  <span class="badge">fork of @patterniha</span>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT: inputs -->
+  <div class="panel">
+
+    <div class="section">
+      <div class="section-title">شبکه</div>
+      <div class="row2">
+        <div>
+          <label>Listen Host</label>
+          <input type="text" id="listenHost" value="0.0.0.0" dir="ltr">
+        </div>
+        <div>
+          <label>Listen Port</label>
+          <input type="number" id="listenPort" value="40443" min="1" max="65535">
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <label>Connect Port</label>
+        <input type="number" id="connectPort" value="443" min="1" max="65535">
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">IP های هدف</div>
+      <div style="display:flex; gap:8px; align-items:flex-start;">
+        <textarea id="ipsInput" placeholder="هر IP در یک خط&#10;188.114.96.0&#10;188.114.97.0&#10;104.16.0.1" style="flex:1; min-height:90px;" spellcheck="false" oninput="parseIPs()"></textarea>
+      </div>
+      <div class="counter" id="ipCounter">تعداد: <span>0</span></div>
+      <div class="tag-list" id="ipTags"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">SNI ها</div>
+      <div style="display:flex; gap:8px; align-items:flex-start;">
+        <textarea id="snisInput" placeholder="هر SNI در یک خط&#10;hcaptcha.com&#10;cdn.jsdelivr.net&#10;cdnjs.cloudflare.com" style="flex:1; min-height:90px;" spellcheck="false" oninput="parseSNIs()"></textarea>
+      </div>
+      <div class="counter" id="sniCounter">تعداد: <span>0</span></div>
+      <div class="tag-list" id="sniTags"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">تنظیمات Pool</div>
+
+      <label>Active Slots — تعداد IP های همزمان فعال</label>
+      <div class="slider-row">
+        <input type="range" min="1" max="10" value="3" id="activeSlots" oninput="syncSlider(this,'activeSlots_val')">
+        <span class="slider-val" id="activeSlots_val">3</span>
+      </div>
+
+      <label style="margin-top:14px">Loss Threshold — آستانه ضعیف بودن (%)</label>
+      <div class="slider-row">
+        <input type="range" min="5" max="50" value="20" id="lossThr" oninput="syncSlider(this,'lossThr_val')">
+        <span class="slider-val" id="lossThr_val">20</span>
+      </div>
+
+      <label style="margin-top:14px">Dead Threshold — آستانه مرده بودن (%)</label>
+      <div class="slider-row">
+        <input type="range" min="30" max="100" value="80" id="deadThr" oninput="syncSlider(this,'deadThr_val')">
+        <span class="slider-val" id="deadThr_val">80</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">تنظیمات Health-Check</div>
+
+      <label>Probe Count — تعداد تست در هر دوره</label>
+      <div class="slider-row">
+        <input type="range" min="2" max="15" value="5" id="probeCount" oninput="syncSlider(this,'probeCount_val')">
+        <span class="slider-val" id="probeCount_val">5</span>
+      </div>
+
+      <label style="margin-top:14px">Check Interval — فاصله بین چک‌ها (ثانیه)</label>
+      <div class="slider-row">
+        <input type="range" min="10" max="120" value="30" id="interval" oninput="syncSlider(this,'interval_val')">
+        <span class="slider-val" id="interval_val">30</span>
+      </div>
+
+      <label style="margin-top:14px">Timeout — timeout هر probe (ثانیه)</label>
+      <div class="slider-row">
+        <input type="range" min="1" max="10" value="3" id="timeout" oninput="syncSlider(this,'timeout_val')">
+        <span class="slider-val" id="timeout_val">3</span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="generate()">⚡ ساخت config.json</button>
+
+  </div>
+
+  <!-- RIGHT: output -->
+  <div class="panel" id="outputPanel">
+    <div class="empty-state">
+      <div class="icon">📄</div>
+      <p>لیست IP و SNI را وارد کنید<br>سپس دکمه ساخت را بزنید</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let ips = [], snis = [];
+
+function syncSlider(el, valId) {
+  document.getElementById(valId).textContent = el.value;
+}
+
+function parseList(raw) {
+  return [...new Set(
+    raw.split(/[\n,;]+/)
+       .map(s => s.trim())
+       .filter(s => s.length > 0)
+  )];
+}
+
+function parseIPs() {
+  ips = parseList(document.getElementById('ipsInput').value);
+  renderTags('ipTags', ips, 'ip');
+  document.querySelector('#ipCounter span').textContent = ips.length;
+}
+
+function parseSNIs() {
+  snis = parseList(document.getElementById('snisInput').value);
+  renderTags('sniTags', snis, 'sni');
+  document.querySelector('#sniCounter span').textContent = snis.length;
+}
+
+function renderTags(containerId, items, type) {
+  const el = document.getElementById(containerId);
+  if (items.length > 12) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = items.map((v, i) =>
+    `<span class="tag">${v}<span class="tag-x" onclick="removeItem('${type}',${i})">×</span></span>`
+  ).join('');
+}
+
+function removeItem(type, idx) {
+  if (type === 'ip') {
+    ips.splice(idx, 1);
+    document.getElementById('ipsInput').value = ips.join('\n');
+    renderTags('ipTags', ips, 'ip');
+    document.querySelector('#ipCounter span').textContent = ips.length;
+  } else {
+    snis.splice(idx, 1);
+    document.getElementById('snisInput').value = snis.join('\n');
+    renderTags('sniTags', snis, 'sni');
+    document.querySelector('#sniCounter span').textContent = snis.length;
+  }
+}
+
+function highlight(json) {
+  return json
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span>:')
+    .replace(/: "([^"]*)"/g, ': <span class="json-str">"$1"</span>')
+    .replace(/: (true|false)/g, ': <span class="json-bool">$1</span>')
+    .replace(/: (-?\d+\.?\d*)/g, ': <span class="json-num">$1</span>')
+    .replace(/([{}\[\],])/g, '<span class="json-punc">$1</span>');
+}
+
+function generate() {
+  parseIPs(); parseSNIs();
+  if (ips.length === 0 || snis.length === 0) {
+    alert('لطفاً حداقل یک IP و یک SNI وارد کنید.');
+    return;
+  }
+
+  const config = {
+    LISTEN_HOST:           document.getElementById('listenHost').value.trim() || '0.0.0.0',
+    LISTEN_PORT:           parseInt(document.getElementById('listenPort').value),
+    CONNECT_PORT:          parseInt(document.getElementById('connectPort').value),
+    ACTIVE_SLOTS:          parseInt(document.getElementById('activeSlots').value),
+    HEALTH_CHECK_INTERVAL: parseInt(document.getElementById('interval').value),
+    HEALTH_CHECK_TIMEOUT:  parseInt(document.getElementById('timeout').value),
+    PROBE_COUNT:           parseInt(document.getElementById('probeCount').value),
+    LOSS_THRESHOLD:        parseFloat((parseInt(document.getElementById('lossThr').value)/100).toFixed(2)),
+    DEAD_THRESHOLD:        parseFloat((parseInt(document.getElementById('deadThr').value)/100).toFixed(2)),
+    CONNECT_IPS:  ips,
+    FAKE_SNIS:    snis
+  };
+
+  const combinations = ips.length * snis.length;
+  const jsonStr = JSON.stringify(config, null, 2);
+
+  document.getElementById('outputPanel').innerHTML = `
+    <div class="output-header">
+      <h2>config.json آماده است</h2>
+      <span class="copy-toast" id="toast">✓ کپی شد</span>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-val">${ips.length}</div>
+        <div class="stat-lbl">تعداد IP</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">${snis.length}</div>
+        <div class="stat-lbl">تعداد SNI</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">${combinations}</div>
+        <div class="stat-lbl">Combination</div>
+      </div>
+    </div>
+
+    <div class="code-box">
+      <div class="code-toolbar">
+        <span class="dot dot-r"></span>
+        <span class="dot dot-y"></span>
+        <span class="dot dot-g"></span>
+        <span class="code-filename">config.json</span>
+        <button class="btn btn-sm" onclick="copyJSON()">📋 کپی</button>
+        <button class="btn btn-sm btn-green" onclick="downloadJSON()">⬇ دانلود</button>
+      </div>
+      <pre id="codeOutput">${highlight(jsonStr)}</pre>
+    </div>
+
+    <div class="hint" style="margin-top:12px">
+      برنامه به صورت داینامیک تمام <strong style="color:var(--accent2)">${combinations}</strong> combination را کشف و رتبه‌بندی می‌کند.<br>
+      در هر دوره <strong style="color:var(--accent2)">${config.PROBE_COUNT}</strong> probe × 10 ترکیب جدید کشف می‌شود.
+    </div>
+  `;
+
+  window._jsonStr = jsonStr;
+}
+
+function copyJSON() {
+  navigator.clipboard.writeText(window._jsonStr).then(() => {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  });
+}
+
+function downloadJSON() {
+  const blob = new Blob([window._jsonStr], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'config.json';
+  a.click();
+}
+</script>
+</body>
+</html>
