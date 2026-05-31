@@ -7,7 +7,7 @@ import threading
 import time
 import json
 import random
-from collections import deque
+import itertools
 
 from utils.network_tools import get_default_interface_ipv4
 from utils.packet_templates import ClientHelloMaker
@@ -31,22 +31,20 @@ CONNECT_PORT          = config["CONNECT_PORT"]
 HEALTH_CHECK_INTERVAL = config.get("HEALTH_CHECK_INTERVAL", 30)
 HEALTH_CHECK_TIMEOUT  = config.get("HEALTH_CHECK_TIMEOUT",  3)
 PROBE_COUNT           = config.get("PROBE_COUNT", 5)
-# تعداد pairهایی که همزمان active نگه داشته می‌شن
 ACTIVE_SLOTS          = config.get("ACTIVE_SLOTS", 3)
-# آستانه loss برای جابجایی بدون قطع session
 LOSS_THRESHOLD        = config.get("LOSS_THRESHOLD", 0.20)
 DEAD_THRESHOLD        = config.get("DEAD_THRESHOLD", 0.80)
 
-if "CONNECT_PAIRS" in config:
-    ALL_PAIRS = [(p["ip"], p["sni"].encode()) for p in config["CONNECT_PAIRS"]]
-else:
-    raw_ips  = config.get("CONNECT_IPS", config.get("CONNECT_IP"))
-    raw_snis = config.get("FAKE_SNIS",   config.get("FAKE_SNI"))
-    ips  = raw_ips  if isinstance(raw_ips,  list) else [raw_ips]
-    snis = raw_snis if isinstance(raw_snis, list) else [raw_snis]
-    ALL_PAIRS = [(ip, sni.encode()) for ip in ips for sni in snis]
+# ── بارگذاری IP و SNI به صورت جداگانه ────────────────────────────────────────
+ALL_IPS  = config["CONNECT_IPS"]
+ALL_SNIS = [s.encode() for s in config["FAKE_SNIS"]]
 
-INTERFACE_IPV4 = get_default_interface_ipv4(ALL_PAIRS[0][0])
+# تمام combination های ممکن — برنامه خودش اینا رو داینامیک کشف می‌کنه
+ALL_COMBINATIONS = list(itertools.product(ALL_IPS, ALL_SNIS))
+print(f"[*] {len(ALL_IPS)} IPs × {len(ALL_SNIS)} SNIs"
+      f" = {len(ALL_COMBINATIONS)} possible combinations")
+
+INTERFACE_IPV4 = get_default_interface_ipv4(ALL_IPS[0])
 DATA_MODE      = "tls"
 BYPASS_METHOD  = "wrong_seq"
 
@@ -54,7 +52,7 @@ fake_injective_connections: dict[tuple, FakeInjectiveConnection] = {}
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  PairStats
+#  PairStats — آمار هر combination (IP, SNI)
 # ══════════════════════════════════════════════════════════════════════════════
 
 class PairStats:
@@ -71,8 +69,9 @@ class PairStats:
 
         self.active_connections: int = 0
         self.total_connections:  int = 0
-        self.alive: bool = True
-        self.in_active_pool: bool = False   # آیا الان در pool فعال هست؟
+        self.alive:         bool = True
+        self.probed:        bool = False   # آیا حداقل یه بار تست شده؟
+        self.in_active_pool:bool = False
 
         self.lock = threading.Lock()
 
@@ -98,15 +97,18 @@ class PairStats:
     def score(self) -> float:
         if not self.alive:
             return float('inf')
+        if not self.probed:
+            return 0.5   # ناشناخته — شانس تست گرفتن داره
         return self.combined_loss_rate
 
     @property
     def is_stable(self) -> bool:
-        return self.alive and self.combined_loss_rate < LOSS_THRESHOLD
+        return self.alive and self.probed and self.combined_loss_rate < LOSS_THRESHOLD
 
     def record_probe(self, success: bool):
         with self.lock:
             self.probes_sent += 1
+            self.probed = True
             if success:
                 self.probes_recv += 1
             if self.probes_sent >= self.MIN_PROBES:
@@ -124,37 +126,153 @@ class PairStats:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  ActivePool — مدیریت ACTIVE_SLOTS تا اتصال همزمان
+#  CombinationExplorer — کشف داینامیک combination های خوب
+# ══════════════════════════════════════════════════════════════════════════════
+
+class CombinationExplorer:
+    """
+    به جای تست همه combination ها یکجا (که می‌تونه خیلی زیاد باشه)،
+    این کلاس به صورت داینامیک و تصادفی combination ها رو کشف می‌کنه:
+
+    - ابتدا یه subset تصادفی از همه combination ها رو probe می‌کنه
+    - در هر دوره بعدی:
+        * combination های خوب رو مجدداً verify می‌کنه
+        * یه batch تصادفی جدید از combination های ناشناخته رو probe می‌کنه
+    - این باعث می‌شه همیشه دنبال گزینه‌های بهتر بگرده
+      بدون اینکه همه رو یکجا تست کنه
+    """
+    INITIAL_SAMPLE  = 20   # چند تا در اول تست می‌شه
+    EXPLORE_BATCH   = 10   # در هر دوره چند تای جدید کشف می‌شه
+    VERIFY_TOP      = 15   # چند تا از بهترین‌ها در هر دوره verify می‌شن
+
+    def __init__(self, combinations: list[tuple[str, bytes]],
+                 port: int, timeout: float, probe_count: int):
+        self.port        = port
+        self.timeout     = timeout
+        self.probe_count = probe_count
+
+        # map از (ip, sni) به PairStats
+        self.stats: dict[tuple, PairStats] = {}
+        for ip, sni in combinations:
+            self.stats[(ip, sni)] = PairStats(ip, sni)
+
+        # combination های هنوز تست‌نشده (shuffled)
+        self._unexplored = list(combinations)
+        random.shuffle(self._unexplored)
+
+        self._lock = threading.Lock()
+
+    def all_stats(self) -> list[PairStats]:
+        return list(self.stats.values())
+
+    def known_stats(self) -> list[PairStats]:
+        """فقط اونایی که حداقل یه بار probe شدن"""
+        return [ps for ps in self.stats.values() if ps.probed]
+
+    # ── probe یک pair ─────────────────────────────────────────────────────
+    def _probe_one(self, ps: PairStats):
+        count = self.probe_count + random.randint(-1, 1)
+        count = max(2, count)
+        for _ in range(count):
+            try:
+                sock = socket.create_connection(
+                    (ps.ip, self.port), timeout=self.timeout)
+                sock.close()
+                ps.record_probe(success=True)
+            except Exception:
+                ps.record_probe(success=False)
+            time.sleep(random.uniform(0.05, 0.2))
+
+    def _run_probes_parallel(self, pairs: list[PairStats]):
+        random.shuffle(pairs)
+        threads = [threading.Thread(target=self._probe_one, args=(ps,), daemon=True)
+                   for ps in pairs]
+        for t in threads:
+            t.start()
+            time.sleep(random.uniform(0, 0.03))
+        for t in threads:
+            t.join()
+
+    # ── مرحله اول: probe اولیه ───────────────────────────────────────────
+    def initial_explore(self):
+        """یه subset تصادفی از combination های ناشناخته رو تست می‌کنه"""
+        with self._lock:
+            batch_keys = self._unexplored[:self.INITIAL_SAMPLE]
+            self._unexplored = self._unexplored[self.INITIAL_SAMPLE:]
+        batch = [self.stats[k] for k in batch_keys]
+        print(f"[Explorer] Initial probe: {len(batch)} combinations...")
+        self._run_probes_parallel(batch)
+
+    # ── دوره‌های بعدی: verify + explore ──────────────────────────────────
+    def periodic_explore(self):
+        """
+        ۱. بهترین‌های شناخته‌شده رو verify کن
+        ۲. یه batch جدید از ناشناخته‌ها رو کشف کن
+        """
+        # verify بهترین‌های فعلی
+        known = sorted(self.known_stats(), key=lambda x: x.score)
+        to_verify = known[:self.VERIFY_TOP]
+        if to_verify:
+            print(f"[Explorer] Verifying top {len(to_verify)} known pairs...")
+            self._run_probes_parallel(to_verify)
+
+        # کشف batch جدید از ناشناخته‌ها
+        with self._lock:
+            batch_keys = self._unexplored[:self.EXPLORE_BATCH]
+            self._unexplored = self._unexplored[self.EXPLORE_BATCH:]
+            remaining = len(self._unexplored)
+
+        if batch_keys:
+            batch = [self.stats[k] for k in batch_keys]
+            print(f"[Explorer] Exploring {len(batch)} new combinations"
+                  f"  ({remaining} remaining unexplored)")
+            self._run_probes_parallel(batch)
+        else:
+            # همه کشف شدن — از اول shuffle کن و دوباره شروع کن
+            print("[Explorer] All combinations explored — reshuffling for next cycle")
+            with self._lock:
+                all_keys = list(self.stats.keys())
+                random.shuffle(all_keys)
+                self._unexplored = all_keys
+
+    def print_summary(self):
+        known   = self.known_stats()
+        stable  = [ps for ps in known if ps.is_stable]
+        weak    = [ps for ps in known if ps.alive and not ps.is_stable]
+        dead    = [ps for ps in known if not ps.alive]
+        unknown = len(self.stats) - len(known)
+
+        print(f"\n{'═'*65}")
+        print(f"[Explorer] known={len(known)}  stable={len(stable)}"
+              f"  weak={len(weak)}  dead={len(dead)}  unexplored={unknown}")
+        print(f"{'─'*65}")
+        for ps in sorted(stable, key=lambda x: x.score)[:8]:
+            marker = "●" if ps.in_active_pool else " "
+            print(f" {marker} {ps.ip:<20} {ps.sni.decode():<25}"
+                  f" loss={ps.combined_loss_rate*100:4.1f}%"
+                  f" active={ps.active_connections}")
+        print(f"{'═'*65}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  ActivePool
 # ══════════════════════════════════════════════════════════════════════════════
 
 class ActivePool:
-    """
-    همیشه ACTIVE_SLOTS تا pair را گرم نگه می‌دارد.
-    قوانین:
-    - انتخاب اولیه: تصادفی از بین stable‌ها (نه خطی)
-    - جابجایی: فقط وقتی یه pair از LOSS_THRESHOLD رد شد
-    - جابجایی graceful: pair قدیمی تا بسته شدن کانکشن‌های فعلی‌اش
-      در pool می‌ماند (draining)، pair جدید بلافاصله کانکشن‌های
-      جدید را می‌گیرد
-    """
-
-    def __init__(self, all_stats: list[PairStats], slots: int):
-        self.all_stats  = all_stats
-        self.slots      = slots
-        self._pool: list[PairStats]      = []   # pairهای فعال
-        self._draining: list[PairStats]  = []   # در حال drain (graceful exit)
+    def __init__(self, explorer: CombinationExplorer, slots: int):
+        self.explorer = explorer
+        self.slots    = slots
+        self._pool:     list[PairStats] = []
+        self._draining: list[PairStats] = []
         self._lock = threading.Lock()
 
     def initialize(self):
-        """انتخاب اولیه تصادفی"""
         with self._lock:
-            candidates = [ps for ps in self.all_stats if ps.is_stable]
+            candidates = [ps for ps in self.explorer.known_stats() if ps.is_stable]
             if not candidates:
-                candidates = [ps for ps in self.all_stats if ps.alive]
+                candidates = [ps for ps in self.explorer.known_stats() if ps.alive]
             if not candidates:
-                candidates = self.all_stats[:]
-
-            # shuffle کامل، نه خطی
+                candidates = self.explorer.known_stats()
             random.shuffle(candidates)
             self._pool = candidates[:self.slots]
             for ps in self._pool:
@@ -162,88 +280,69 @@ class ActivePool:
         self._print_pool("INIT")
 
     def refresh(self):
-        """
-        بعد از هر health-check صدا زده می‌شه:
-        - pairهای ضعیف را به draining می‌فرستد
-        - جای خالی را با بهترین (بر اساس کمترین loss) پر می‌کند
-        - انتخاب از بین کاندیداها تصادفی‌وزن‌دار است
-        """
         with self._lock:
-            replaced = False
+            # آزاد کردن draining‌های خالی
+            self._draining = [ps for ps in self._draining
+                              if ps.active_connections > 0]
+            for ps in [p for p in self._draining if p.active_connections == 0]:
+                ps.in_active_pool = False
 
-            # draining‌هایی که کانکشن فعال ندارند را آزاد کن
-            still_draining = []
-            for ps in self._draining:
-                if ps.active_connections > 0:
-                    still_draining.append(ps)
-                else:
-                    ps.in_active_pool = False
-            self._draining = still_draining
-
-            # پیدا کردن pairهای ضعیف در pool
+            # حذف ضعیف‌ها
             weak = [ps for ps in self._pool if not ps.is_stable]
             for ps in weak:
                 self._pool.remove(ps)
-                self._draining.append(ps)   # graceful: کانکشن‌های فعلی‌شان ادامه دارند
-                replaced = True
+                self._draining.append(ps)
 
-            # پر کردن جاهای خالی
+            # پر کردن جاهای خالی از بهترین‌های شناخته‌شده
             in_use = set(id(ps) for ps in self._pool + self._draining)
             candidates = [
-                ps for ps in self.all_stats
+                ps for ps in self.explorer.known_stats()
                 if ps.is_stable and id(ps) not in in_use
             ]
             if not candidates:
                 candidates = [
-                    ps for ps in self.all_stats
+                    ps for ps in self.explorer.known_stats()
                     if ps.alive and id(ps) not in in_use
                 ]
 
             needed = self.slots - len(self._pool)
             if needed > 0 and candidates:
-                # انتخاب weighted-random (کمترین loss = وزن بیشتر)
                 weights = [1.0 / (ps.combined_loss_rate + 0.01) for ps in candidates]
                 chosen = []
-                temp_candidates = candidates[:]
-                temp_weights    = weights[:]
-                for _ in range(min(needed, len(temp_candidates))):
-                    pick = random.choices(temp_candidates, weights=temp_weights, k=1)[0]
-                    idx  = temp_candidates.index(pick)
+                tc, tw = candidates[:], weights[:]
+                for _ in range(min(needed, len(tc))):
+                    pick = random.choices(tc, weights=tw, k=1)[0]
+                    idx  = tc.index(pick)
                     chosen.append(pick)
-                    temp_candidates.pop(idx)
-                    temp_weights.pop(idx)
+                    tc.pop(idx); tw.pop(idx)
                 for ps in chosen:
                     ps.in_active_pool = True
                     self._pool.append(ps)
-                    replaced = True
 
-            if replaced:
-                self._print_pool("REFRESH")
+        self._print_pool("REFRESH")
 
     def pick(self) -> PairStats:
-        """
-        یه pair از pool برای کانکشن جدید.
-        weighted-random بر اساس کمترین loss.
-        """
         with self._lock:
-            pool = self._pool if self._pool else self.all_stats
+            pool = self._pool if self._pool else self.explorer.known_stats()
+            if not pool:
+                pool = self.explorer.all_stats()
             weights = [1.0 / (ps.combined_loss_rate + 0.01) for ps in pool]
             return random.choices(pool, weights=weights, k=1)[0]
 
     def report_failure(self, ps: PairStats):
-        """یه pair مستقیم fail کرد — سریع‌تر از health-check بررسی شه"""
         ps.record_probe(success=False)
         if not ps.is_stable:
             self.refresh()
 
     def _print_pool(self, reason: str):
-        print(f"\n[Pool/{reason}] active slots={len(self._pool)}"
+        print(f"\n[Pool/{reason}] active={len(self._pool)}"
               f"  draining={len(self._draining)}")
         for ps in self._pool:
-            print(f"  ● {ps.ip:<20} loss={ps.combined_loss_rate*100:4.1f}%"
-                  f"  conns={ps.active_connections}")
+            print(f"  ● {ps.ip:<18} {ps.sni.decode():<25}"
+                  f" loss={ps.combined_loss_rate*100:4.1f}%"
+                  f" conns={ps.active_connections}")
         for ps in self._draining:
-            print(f"  ↓ {ps.ip:<20} draining... conns={ps.active_connections}")
+            print(f"  ↓ {ps.ip:<18} draining... conns={ps.active_connections}")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -252,80 +351,29 @@ class ActivePool:
 
 class ConnectionManager:
 
-    def __init__(self, pairs, port, interval, timeout, probe_count, slots):
-        self.stats: list[PairStats] = [PairStats(ip, sni) for ip, sni in pairs]
-        self.port        = port
-        self.interval    = interval
-        self.timeout     = timeout
-        self.probe_count = probe_count
-        self.pool        = ActivePool(self.stats, slots)
-
-    def _probe_random_order(self, stats_list: list[PairStats]):
-        """
-        probe همه pair‌ها به ترتیب تصادفی (نه خطی).
-        هر probe در thread جداگانه.
-        """
-        shuffled = stats_list[:]
-        random.shuffle(shuffled)
-
-        def probe_one(ps):
-            # تعداد probe را هم تصادفی کمی تغییر بده (jitter)
-            count = self.probe_count + random.randint(-1, 1)
-            count = max(2, count)
-            for _ in range(count):
-                try:
-                    sock = socket.create_connection(
-                        (ps.ip, self.port), timeout=self.timeout)
-                    sock.close()
-                    ps.record_probe(success=True)
-                except Exception:
-                    ps.record_probe(success=False)
-                # تاخیر تصادفی بین probeها (jitter)
-                time.sleep(random.uniform(0.05, 0.2))
-
-        threads = [threading.Thread(target=probe_one, args=(ps,), daemon=True)
-                   for ps in shuffled]
-        # شروع با تاخیر تصادفی کوچک بین هر thread (نه همه یکجا)
-        for t in threads:
-            t.start()
-            time.sleep(random.uniform(0, 0.05))
-        for t in threads:
-            t.join()
+    def __init__(self, combinations, port, interval, timeout, probe_count, slots):
+        self.explorer = CombinationExplorer(combinations, port, timeout, probe_count)
+        self.pool     = ActivePool(self.explorer, slots)
+        self.interval = interval
 
     def run_health_loop(self):
-        # اول یه چک سریع
-        self._probe_random_order(self.stats)
+        # probe اولیه
+        self.explorer.initial_explore()
         self.pool.initialize()
-        self._print_status()
+        self.explorer.print_summary()
 
         while True:
-            # فاصله بین چک‌ها هم کمی jitter داره
             jitter = random.uniform(-5, 5)
             time.sleep(max(10, self.interval + jitter))
-            self._probe_random_order(self.stats)
+            self.explorer.periodic_explore()
             self.pool.refresh()
-            self._print_status()
+            self.explorer.print_summary()
 
     def pick_pair(self) -> PairStats:
         return self.pool.pick()
 
     def report_failure(self, ps: PairStats):
         self.pool.report_failure(ps)
-
-    def _print_status(self):
-        stable = sorted([ps for ps in self.stats if ps.is_stable],  key=lambda x: x.score)
-        weak   = [ps for ps in self.stats if ps.alive and not ps.is_stable]
-        dead   = [ps for ps in self.stats if not ps.alive]
-        print(f"\n{'═'*62}")
-        print(f"[Health] stable={len(stable)}  weak={len(weak)}  dead={len(dead)}")
-        print(f"{'─'*62}")
-        for ps in stable[:10]:
-            marker = "●" if ps.in_active_pool else " "
-            print(f" {marker} {ps.ip:<20} loss={ps.combined_loss_rate*100:4.1f}%"
-                  f"  active={ps.active_connections}")
-        if weak or dead:
-            print(f"  ⚠ weak={len(weak)}  ✗ dead={len(dead)}")
-        print(f"{'═'*62}")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -373,6 +421,7 @@ async def handle(incoming_sock: socket.socket, addr, manager: ConnectionManager)
             pair.total_connections  += 1
 
         print(f"[+] {addr[0]}:{addr[1]} → {connect_ip}"
+              f"  sni={fake_sni.decode()}"
               f"  loss={pair.combined_loss_rate*100:.1f}%"
               f"  active={pair.active_connections}")
 
@@ -476,18 +525,15 @@ if __name__ == "__main__":
     print("هشن شومافر تیامح دینکیم هدافتسا دازآ تنرتنیا هب یسرتسد یارب همانرب نیا زا رگا")
     print("USDT (BEP20): 0x76a768B53Ca77B43086946315f0BDF21156bF424")
     print("@patterniha\n")
-    print(f"[*] {len(ALL_PAIRS)} pairs  |  active_slots={ACTIVE_SLOTS}"
-          f"  |  loss_threshold={LOSS_THRESHOLD*100:.0f}%"
-          f"  |  check_interval={HEALTH_CHECK_INTERVAL}s")
 
     manager = ConnectionManager(
-        ALL_PAIRS, CONNECT_PORT,
+        ALL_COMBINATIONS, CONNECT_PORT,
         HEALTH_CHECK_INTERVAL, HEALTH_CHECK_TIMEOUT,
         PROBE_COUNT, ACTIVE_SLOTS
     )
     threading.Thread(target=manager.run_health_loop, daemon=True).start()
 
-    all_ips = list(dict.fromkeys(ip for ip, _ in ALL_PAIRS))
+    all_ips = list(dict.fromkeys(ALL_IPS))
     ip_conditions = " or ".join(
         f"(ip.SrcAddr == {ip} and ip.DstAddr == {INTERFACE_IPV4}) or "
         f"(ip.SrcAddr == {INTERFACE_IPV4} and ip.DstAddr == {ip})"
