@@ -1,34 +1,41 @@
 """
-fake_tcp_unix.py — Linux/macOS backend using Scapy.
+fake_tcp_unix.py — Linux / macOS / Android backend using Scapy.
 
 Original technique by @patterniha (https://github.com/patterniha/SNI-Spoofing)
-This file is the Unix counterpart of the original fake_tcp.py (WinDivert/Windows).
 
 Requirements:
   pip install scapy
-  Run with: sudo python main.py
+  Linux/macOS: sudo python main.py
+  Android (Termux): run as root (tsu / su -c)
 """
 
 import sys
 import threading
 import socket
+import platform
+
+OS     = platform.system()
+IS_ANDROID = hasattr(platform, 'android_ver') or 'ANDROID_ROOT' in __import__('os').environ
 
 try:
     from scapy.all import conf, sniff, get_if_list, IP, TCP, Raw, send
     conf.verb = 0
+    # on Android/Termux, L3 socket works better than L2
+    if IS_ANDROID:
+        conf.L3socket = __import__('scapy.supersocket', fromlist=['L3RawSocket']).L3RawSocket
 except ImportError:
     sys.exit(
         "[ERROR] scapy is not installed.\n"
         "  Run: pip install scapy\n"
-        "  Then: sudo python main.py"
+        "  Android: pkg install python && pip install scapy"
     )
+
+from dataclasses import dataclass, field
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  FakeInjectiveConnection — identical interface to original fake_tcp.py
 # ══════════════════════════════════════════════════════════════════════════════
-
-from dataclasses import dataclass, field
 
 @dataclass
 class FakeInjectiveConnection:
@@ -59,22 +66,19 @@ class FakeInjectiveConnection:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  FakeTcpInjector — Scapy-based, same interface as original
+#  FakeTcpInjector
 # ══════════════════════════════════════════════════════════════════════════════
 
 class FakeTcpInjector:
     """
-    Drop-in replacement for the WinDivert-based FakeTcpInjector.
-    Accepts the same (w_filter, connections) arguments so main.py
-    does not need to change.
+    Drop-in replacement for WinDivert-based FakeTcpInjector.
+    Accepts same (w_filter, connections) arguments as original.
     """
 
     def __init__(self, w_filter: str, connections: dict):
-        # w_filter is ignored on Unix — Scapy uses BPF "tcp" directly
         self.connections = connections
         self._lock       = threading.Lock()
 
-    # --- find connection by packet direction ---
     def _find_conn(self, src_ip, dst_ip, sport, dport):
         c = self.connections.get((src_ip, dst_ip, sport, dport))
         if c:
@@ -84,7 +88,6 @@ class FakeTcpInjector:
             return c, 'in'
         return None, None
 
-    # --- process each captured packet ---
     def _process_packet(self, pkt):
         try:
             if IP not in pkt or TCP not in pkt:
@@ -92,10 +95,9 @@ class FakeTcpInjector:
             if not self.connections:
                 return
 
-            ip  = pkt[IP]
-            tcp = pkt[TCP]
-            f   = int(tcp.flags)
-
+            ip      = pkt[IP]
+            tcp     = pkt[TCP]
+            f       = int(tcp.flags)
             syn     = bool(f & 0x02)
             ack     = bool(f & 0x10)
             fin     = bool(f & 0x01)
@@ -107,34 +109,24 @@ class FakeTcpInjector:
                 return
 
             if direction == 'out':
-                # Step 1: SYN — record seq number
                 if syn and not ack and not rst and not fin:
                     conn.syn_seq  = tcp.seq
                     conn.syn_sent = True
                     return
-
-                # Step 2: 3rd handshake ACK (no payload) -> inject fake packet
-                if (conn.syn_sent
-                        and not conn.fake_sent
-                        and ack
-                        and not syn and not fin and not rst
+                if (conn.syn_sent and not conn.fake_sent
+                        and ack and not syn and not fin and not rst
                         and len(payload) == 0):
                     self._inject_fake(conn)
                     conn.fake_sent = True
                     return
 
             elif direction == 'in':
-                # SYN-ACK — record seq number
                 if syn and ack and not rst and not fin:
                     conn.syn_ack_seq = tcp.seq
                     return
-
-                # Unexpected close before inject
                 if (rst or fin) and not conn.fake_sent:
                     conn.notify("unexpected_close")
                     return
-
-                # Server ACK after fake inject -> success
                 if conn.fake_sent and ack and not syn:
                     conn.notify("fake_data_ack_recv")
                     return
@@ -142,57 +134,75 @@ class FakeTcpInjector:
         except Exception:
             pass
 
-    # --- inject fake ClientHello using wrong_seq technique by @patterniha ---
     def _inject_fake(self, conn: FakeInjectiveConnection):
-        """
-        wrong_seq bypass:
-          seq = syn_seq + 1 - len(fake_data)
-          Puts the packet BEFORE the server's receive window.
-          Server silently drops it; stateful DPI sees the SNI and whitelists the flow.
-        """
+        """wrong_seq bypass — original technique by @patterniha"""
         fake_seq = (conn.syn_seq + 1 - len(conn.fake_data)) & 0xFFFFFFFF
-
         pkt = (
             IP(src=conn.src_ip, dst=conn.dst_ip) /
-            TCP(
-                sport=conn.src_port,
-                dport=conn.dst_port,
-                flags='A',
-                seq=fake_seq,
-                ack=conn.syn_ack_seq + 1,
-            ) /
+            TCP(sport=conn.src_port, dport=conn.dst_port,
+                flags='A', seq=fake_seq, ack=conn.syn_ack_seq + 1) /
             Raw(load=conn.fake_data)
         )
         send(pkt, verbose=False)
         print(f"[FakeTCP] injected fake ClientHello -> {conn.dst_ip}:{conn.dst_port}")
 
-    # --- sniff one interface ---
     def _sniff_iface(self, iface: str):
         try:
-            sniff(
-                iface=iface,
-                filter="tcp",
-                prn=self._process_packet,
-                store=False,
-            )
+            sniff(iface=iface, filter="tcp",
+                  prn=self._process_packet, store=False)
         except Exception:
-            pass  # interface not sniffable -> skip
+            pass
 
-    # --- entry point (called in a daemon thread by main.py) ---
-    def run(self):
-        import platform
-        OS = platform.system()
-        print(f"[FakeTCP] Starting on {OS} (Scapy backend)...")
-
+    def _get_interfaces(self) -> list[str]:
+        """
+        Get sniffable interfaces.
+        Android/Termux: manually add common interface names
+        since get_if_list() may return nothing.
+        """
         try:
             ifaces = get_if_list()
         except Exception:
             ifaces = []
 
-        if not ifaces:
-            sys.exit("[FakeTCP] No network interfaces found. Run as root/sudo.")
+        if IS_ANDROID or not ifaces:
+            # common Android interface names
+            android_ifaces = ['wlan0', 'rmnet0', 'rmnet_data0',
+                              'rmnet_data1', 'lo', 'tun0', 'ccmni0']
+            import os
+            # also scan /sys/class/net which works on Android
+            try:
+                sys_ifaces = os.listdir('/sys/class/net')
+                android_ifaces = list(set(android_ifaces + sys_ifaces))
+            except Exception:
+                pass
+            # merge with whatever scapy found
+            ifaces = list(set(ifaces + android_ifaces))
 
-        print(f"[FakeTCP] Sniffing {len(ifaces)} interface(s)...")
+        return [i for i in ifaces if i]  # filter empty strings
+
+    def run(self):
+        label = f"{OS}{'(Android)' if IS_ANDROID else ''}"
+        print(f"[FakeTCP] Starting on {label} (Scapy backend)...")
+
+        # check root on Android
+        if IS_ANDROID:
+            import os
+            if os.geteuid() != 0:
+                sys.exit(
+                    "[ERROR] Android: root is required.\n"
+                    "  Run: su -c 'python main.py'\n"
+                    "  Or use Termux with tsu: tsu -c 'python main.py'"
+                )
+
+        ifaces = self._get_interfaces()
+        if not ifaces:
+            sys.exit(
+                f"[FakeTCP] No interfaces found on {label}.\n"
+                "  Linux/macOS: run with sudo\n"
+                "  Android: run as root with su"
+            )
+
+        print(f"[FakeTCP] Sniffing {len(ifaces)} interface(s): {ifaces}")
 
         threads = [
             threading.Thread(target=self._sniff_iface, args=(iface,), daemon=True)
